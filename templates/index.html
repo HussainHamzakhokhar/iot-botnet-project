@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IoT Botnet Detection</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 40px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .safe { color: #4ade80; }
+        .sus { color: #facc15; }
+        .crit { color: #ff6b6b; }
+        .buttons {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .table-container {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .badge-safe { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        .badge-sus { background: rgba(250, 204, 21, 0.2); color: #facc15; }
+        .badge-crit { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ IoT BOTNET DETECTION 🛡️</h1>
+        
+        <div class="stats">
+            <div class="stat">
+                <div>Safe</div>
+                <div class="stat-value safe" id="safe">0</div>
+            </div>
+            <div class="stat">
+                <div>Suspicious</div>
+                <div class="stat-value sus" id="sus">0</div>
+            </div>
+            <div class="stat">
+                <div>Critical</div>
+                <div class="stat-value crit" id="crit">0</div>
+            </div>
+            <div class="stat">
+                <div>Total</div>
+                <div class="stat-value" id="total" style="color: #00d4ff;">0</div>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button onclick="detectOnce()">▶ Detect Once</button>
+            <button onclick="startAuto()">▶▶ Auto-Detect</button>
+            <button onclick="stopAuto()">⏹ Stop</button>
+            <button onclick="clearAll()">🗑️ Clear</button>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                        <th>Threat Level</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="list">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999;">Click "Detect Once" to start</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let data = [];
+        let running = false;
+        let interval = null;
+
+        async function detectOnce() {
+            const res = await fetch('/api/simulate');
+            const rec = await res.json();
+            data.push(rec);
+            update();
+        }
+
+        function startAuto() {
+            if (running) return;
+            running = true;
+            interval = setInterval(detectOnce, 800);
+        }
+
+        function stopAuto() {
+            running = false;
+            clearInterval(interval);
+        }
+
+        function clearAll() {
+            data = [];
+            fetch('/api/clear');
+            update();
+        }
+
+        function update() {
+            const safe = data.filter(x => x.threat_level <= 50).length;
+            const sus = data.filter(x => x.threat_level > 50 && x.threat_level <= 80).length;
+            const crit = data.filter(x => x.threat_level > 80).length;
+
+            document.getElementById('safe').textContent = safe;
+            document.getElementById('sus').textContent = sus;
+            document.getElementById('crit').textContent = crit;
+            document.getElementById('total').textContent = data.length;
+
+            const list = document.getElementById('list');
+            if (data.length === 0) {
+                list.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">Click "Detect Once" to start</td></tr>';
+            } else {
+                list.innerHTML = data.slice(-10).reverse().map(x => {
+                    let badgeClass = x.threat_level > 80 ? 'badge-crit' : (x.threat_level > 50 ? 'badge-sus' : 'badge-safe');
+                    let status = x.threat_level > 80 ? 'CRITICAL' : (x.threat_level > 50 ? 'SUSPICIOUS' : 'SAFE');
+                    return `<tr>
+                        <td>${x.device_id}</td>
+                        <td>${x.threat_level}%</td>
+                        <td><span class="badge ${badgeClass}">${status}</span></td>
+                        <td>${x.timestamp}</td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+
+        update();
+    </script>
+</body>
+</html>

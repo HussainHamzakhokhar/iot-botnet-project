@@ -1,0 +1,40 @@
+# Security-sensitive files - DO NOT COMMIT
+keys/
+ssl/
+*.key
+*.pem
+.master
+.master_salt
+
+# Encrypted data (safe to commit, but large)
+encrypted_models/
+encrypted_data/
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+
+# API keys and secrets
+api_keys.json
+secrets.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# Model files (optional - may be large)
+*.pkl
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

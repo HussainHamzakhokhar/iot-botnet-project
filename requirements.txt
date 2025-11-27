@@ -1,0 +1,21 @@
+# Requirements for IoT Botnet Detection System with Security
+
+# Core ML and Data Processing
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.0.0
+joblib>=1.2.0
+pyarrow>=10.0.0  # For encrypted DataFrame storage
+
+# Web Framework
+flask>=2.0.0
+
+# Security & Cryptography
+cryptography>=41.0.0  # AES-256-GCM, PBKDF2, X.509 certificates
+
+# Optional: Production WSGI Server
+gunicorn>=21.0.0
+
+# Optional: Additional Security
+# python-dotenv>=1.0.0  # Environment variable management
+# redis>=4.0.0  # Distributed rate limiting
